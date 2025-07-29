@@ -1,4 +1,4 @@
-name: Deploy to Heroku
+name: CI/CD - Deploy to Heroku
 
 on:
   push:
@@ -8,28 +8,30 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: 🛎 Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: ⚙️ Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm install
 
-      - name: Run tests
+      - name: 🧪 Run tests
         run: npm test
-        continue-on-error: true
+        continue-on-error: true  # Set to false if you want to block deploys on failing tests
 
-      - name: Deploy to Heroku
+      - name: 🔧 Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: 🚀 Deploy to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
         run: |
-          curl https://cli-assets.heroku.com/install.sh | sh
-          echo "$HEROKU_API_KEY" | heroku auth:token
-          heroku git:remote -a "$HEROKU_APP_NAME"
-          git push heroku HEAD:main
+          git remote add heroku https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_NAME.git
+          git push heroku HEAD:main --force
